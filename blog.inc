@@ -19,19 +19,19 @@ class BlogItemMigration extends BlogNodeMigration {
 
     parent::__construct($arguments);
 
-    $this->addFieldMapping('D7_TABLE', 'D6_TABLE');
+    $this->addFieldMapping('D7_COLUMN_NAME', 'D6_COLUMN_NAME');
     // Map the image field to the new image field, base this on the Files migration
-    $this->addFieldMapping('D7_TABLE', 'D6_TABLE')
+    $this->addFieldMapping('D7_COLUMN_NAME', 'D6_COLUMN_NAME')
       ->sourceMigration('Files');
-    $this->addFieldMapping('D7_TABLE:file_class')
+    $this->addFieldMapping('D7_COLUMN_NAME:file_class')
       ->defaultValue('MigrateFileFid');
-    $this->addFieldMapping('D7_TABLE:source_dir')
+    $this->addFieldMapping('D7_COLUMN_NAME:source_dir')
       ->defaultValue('http://SAME URL AS MODULE');
-    $this->addFieldMapping('D7_TABLE:preserve_files')
+    $this->addFieldMapping('D7_COLUMN_NAME:preserve_files')
       ->defaultValue(TRUE);
     // End image mapping
     // This will set the text format
-    $this->addFieldMapping('D7_TABLE:format')
+    $this->addFieldMapping('D7_COLUMN_NAME:format')
       ->defaultValue('filtered_html');
   }
 }
