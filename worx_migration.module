@@ -1,0 +1,104 @@
+<?php
+
+/**
+ * This is example code for a Drupal 6 to Drupal 7 migration. This won't actually
+ * work without defining the referenced vocabularies, content types, and fields
+ * on each side.
+ */
+
+/**
+ * Implements hook_flush_caches().
+ */
+function worx_migration_flush_caches() {
+  worx_migration_register_migrations();
+}
+
+/**
+ * Register all D6->D7 migrations.
+ */
+function worx_migration_register_migrations() {
+  /**
+   * Each migration being registered takes an array of arguments, some required
+   * and some optional. Start with the common arguments required by all - the
+   * source_connection (connection key, set up in settings.php, pointing to
+   * the Drupal 6 database), source_version (major version of Drupal), and
+   * group_name (a.k.a. import job).
+   */
+  $common_arguments = array(
+    'source_connection' => 'legacy',
+    'source_version' => 6,
+    'group_name' => 'GROUP',
+    'source_database' => array(
+      'driver' => 'mysql',
+      'database' => 'DATABASE',
+      'username' => 'USER', // Ideally this user has readonly access
+      // Best practice: use a variable (defined by setting $conf in settings.php, or
+      // with drush vset) for the password rather than exposing it in the code.
+      'password' => variable_get('worx_migration_password', ''),
+      'host' => '127.0.0.1',
+      'prefix' => '',
+    ),
+  );
+
+  // The description and the migration machine name are also required arguments,
+  // which will be unique for each migration you register.
+  $arguments = $common_arguments + array(
+    'description' => t('Migration of users from Drupal 6'),
+    'machine_name' => 'User',
+  );
+
+  // We just use the migrate_d2d D6 migration class as-is.
+  Migration::registerMigration('DrupalUser6Migration', $arguments['machine_name'],
+                               $arguments);
+
+  // Node migrations - each has its own class derived from the migrate_d2d class,
+  // specifying its particular field mappings and transformations. source_type
+  // and destination_type are required arguments.
+  $node_arguments = array(
+    array(
+      'class_name' => 'BlogItemMigration',
+      'description' => t('Migration of professionals nodes from Drupal 6'),
+      'machine_name' => 'Blog_Nodes',
+      'source_type' => 'OLD CONTENT TYPE',
+      'destination_type' => 'NEW CONTENT TYPE',
+    ),
+  );
+  // Tell the node migrations where the users are coming from, so they can
+  // set up the dependency and resolve D6->D7 uids.
+  $common_node_arguments = $common_arguments + array(
+    'user_migration' => 'User',
+  );
+  foreach ($node_arguments as $arguments) {
+    $arguments = array_merge_recursive($arguments, $common_node_arguments);
+    Migration::registerMigration($arguments['class_name'], $arguments['machine_name'],
+                                 $arguments);
+  }
+
+  /*
+   * Migrate files table
+   */
+  // The description and the migration machine name are also required arguments,
+  // which will be unique for each migration you register.
+  $file_arguments = $common_arguments + array(
+    'description' => t('Migration of files from Drupal 6'),
+    'machine_name' => 'Files',
+    'user_migration' => 'User',
+    'default_uid' => 1,
+    'source_dir' => 'URL HERE',
+    'destination_dir' => 'public://',
+  );
+  // We just use the migrate_d2d D6 migration class as-is.
+  Migration::registerMigration('DrupalFile6Migration', 
+    $file_arguments['machine_name'], $file_arguments);
+}
+
+/**
+ * Implements hook_migrate_api().
+ */
+function worx_migration_migrate_api() {
+  $api = array(
+    'api' => 2,
+  );
+  return $api;
+}
+
