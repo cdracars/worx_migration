@@ -31,8 +31,8 @@ function worx_migration_register_migrations() {
     'source_connection' => 'legacy',
     'source_database' => array(
       'driver' => 'mysql',
-      'database' => 'oldmag',
-      'username' => 'root',
+      'database' => 'DATABASE',
+      'username' => 'USERNAME',
   // Ideally this user has readonly access
   // Best practice: use a variable (defined by setting $conf in settings.php,
   // or with drush vset) for the password rather than exposing it in the code.
@@ -102,11 +102,11 @@ function worx_migration_register_migrations() {
   // source_type and destination_type are required arguments.
   $node_arguments = array(
     array(
-      'class_name' => 'MagArticleItemMigration',
-      'description' => t('Migration of professionals nodes from Drupal 6'),
-      'machine_name' => 'Mag_Article_Nodes',
-      'source_type' => 'article',
-      'destination_type' => 'article',
+      'class_name' => 'WorxItemMigration',
+      'description' => t('Migration of nodes from Drupal 6'),
+      'machine_name' => 'MIGRATION_NAME',
+      'source_type' => 'NODE_TYPE',
+      'destination_type' => 'NODE_TYPE',
     ),
   );
   // Tell the node migrations where the users are coming from, so they can
@@ -130,7 +130,7 @@ function worx_migration_register_migrations() {
     'machine_name' => 'Files',
     'user_migration' => 'User',
     'default_uid' => 1,
-    'source_dir' => 'http://magazine.usao.edu',
+    'source_dir' => 'http://FULL PATH TO FILES DIR ON SOURCE SITE',
     'destination_dir' => 'public://',
   );
   // We just use the migrate_d2d D6 migration class as-is.
