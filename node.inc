@@ -5,7 +5,7 @@
  * Common mappings for the Drupal 6 node migrations.
  */
 
-abstract class MagArticleNodeMigration extends DrupalNode6Migration {
+abstract class WorxNodeMigration extends DrupalNode6Migration {
   public function __construct(array $arguments) {
     parent::__construct($arguments);
     $options = array('track_changes' => 1);
@@ -16,7 +16,7 @@ abstract class MagArticleNodeMigration extends DrupalNode6Migration {
   }
 }
 
-class MagArticleItemMigration extends MagArticleNodeMigration {
+class WorxItemMigration extends WorxNodeMigration {
   public function __construct(array $arguments) {
 
     parent::__construct($arguments);
