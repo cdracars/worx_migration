@@ -1,9 +1,10 @@
 <?php
 
 /**
- * This is example code for a Drupal 6 to Drupal 7 migration. This won't actually
- * work without defining the referenced vocabularies, content types, and fields
- * on each side.
+ * @file
+ * This is example code for a Drupal 6 to Drupal 7 migration. This won't
+ * actually work without defining the referenced vocabularies, content types,
+ * and fields on each side.
  */
 
 /**
@@ -17,50 +18,95 @@ function worx_migration_flush_caches() {
  * Register all D6->D7 migrations.
  */
 function worx_migration_register_migrations() {
-  /**
-   * Each migration being registered takes an array of arguments, some required
-   * and some optional. Start with the common arguments required by all - the
-   * source_connection (connection key, set up in settings.php, pointing to
-   * the Drupal 6 database), source_version (major version of Drupal), and
-   * group_name (a.k.a. import job).
-   */
+
+  // Each migration being registered takes an array of arguments, some required
+  // and some optional. Start with the common arguments required by all - the
+  // source_connection (connection key, set up in settings.php, pointing to
+  // the Drupal 6 database), source_version (major version of Drupal), and
+  // group_name (a.k.a. import job).
+
   $common_arguments = array(
-    'source_connection' => 'legacy',
     'source_version' => 6,
-    'group_name' => 'GROUP',
+    'group_name' => 'worx_migrations',
+    'source_connection' => 'legacy',
     'source_database' => array(
       'driver' => 'mysql',
-      'database' => 'DATABASE',
-      'username' => 'USER', // Ideally this user has readonly access
-      // Best practice: use a variable (defined by setting $conf in settings.php, or
-      // with drush vset) for the password rather than exposing it in the code.
+      'database' => 'oldmag',
+      'username' => 'root',
+  // Ideally this user has readonly access
+  // Best practice: use a variable (defined by setting $conf in settings.php,
+  // or with drush vset) for the password rather than exposing it in the code.
       'password' => variable_get('worx_migration_password', ''),
       'host' => '127.0.0.1',
       'prefix' => '',
     ),
   );
 
+  // Role mappings.
+  $role_arguments = $common_arguments + array(
+    'machine_name' => 'Role',
+    'description' => t('Import Drupal 6 roles'),
+    'role_mappings' => array(
+      'Admin' => 'Administrator',
+    ),
+  );
+  Migration::registerMigration('DrupalRole6Migration',
+    $role_arguments['machine_name'], $role_arguments);
+
   // The description and the migration machine name are also required arguments,
   // which will be unique for each migration you register.
   $arguments = $common_arguments + array(
     'description' => t('Migration of users from Drupal 6'),
     'machine_name' => 'User',
+    'role_migration' => 'Role',
   );
 
   // We just use the migrate_d2d D6 migration class as-is.
   Migration::registerMigration('DrupalUser6Migration', $arguments['machine_name'],
                                $arguments);
 
-  // Node migrations - each has its own class derived from the migrate_d2d class,
-  // specifying its particular field mappings and transformations. source_type
-  // and destination_type are required arguments.
+  // For vocabulary migrations, source_vocabulary and destination_vocabulary are
+  // required arguments. Note that in Drupal 6 vocabularies did not have machine
+  // names, so we use the vocabulary ID to uniquely identify them.
+  $vocabulary_arguments = array(
+  // array(
+  //  'description' => t('Migration of Event Type terms from Drupal 6'),
+  //  'machine_name' => 'Calendar_Terms',
+  //  'source_vocabulary' => '2',  // D6 Vocabulary ID
+  //  'destination_vocabulary' => 'calendar',
+  // ),
+  // array(
+  //  'description' => t('Migration of Department terms from Drupal 6'),
+  //  'machine_name' => 'Department_Terms',
+  //  'source_vocabulary' => '10',  // D6 Vocabulary ID
+  //  'destination_vocabulary' => 'department',
+  // ),
+  );
+
+  // Again, we're using the migrate_d2d class directly.
+  // The soft dependency says that while we don't have to run the user migration
+  // first, we want to make sure it's listed first so the vocubularies are
+  // listed right ahead of the node migrations.
+  $common_vocabulary_arguments = $common_arguments + array(
+    'class_name' => 'DrupalTerm6Migration',
+    'soft_dependencies' => array('User'),
+  );
+  foreach ($vocabulary_arguments as $arguments) {
+    $arguments += $common_vocabulary_arguments;
+    Migration::registerMigration($arguments['class_name'], $arguments['machine_name'],
+                                 $arguments);
+  }
+
+  // Node migrations - each has its own class derived from the migrate_d2d
+  // class, specifying its particular field mappings and transformations.
+  // source_type and destination_type are required arguments.
   $node_arguments = array(
     array(
-      'class_name' => 'BlogItemMigration',
+      'class_name' => 'MagArticleItemMigration',
       'description' => t('Migration of professionals nodes from Drupal 6'),
-      'machine_name' => 'Blog_Nodes',
-      'source_type' => 'OLD CONTENT TYPE',
-      'destination_type' => 'NEW CONTENT TYPE',
+      'machine_name' => 'Mag_Article_Nodes',
+      'source_type' => 'article',
+      'destination_type' => 'article',
     ),
   );
   // Tell the node migrations where the users are coming from, so they can
@@ -84,21 +130,10 @@ function worx_migration_register_migrations() {
     'machine_name' => 'Files',
     'user_migration' => 'User',
     'default_uid' => 1,
-    'source_dir' => 'URL HERE',
+    'source_dir' => 'http://magazine.usao.edu',
     'destination_dir' => 'public://',
   );
   // We just use the migrate_d2d D6 migration class as-is.
-  Migration::registerMigration('DrupalFile6Migration', 
+  Migration::registerMigration('DrupalFile6Migration',
     $file_arguments['machine_name'], $file_arguments);
 }
-
-/**
- * Implements hook_migrate_api().
- */
-function worx_migration_migrate_api() {
-  $api = array(
-    'api' => 2,
-  );
-  return $api;
-}
-
