@@ -24,6 +24,10 @@ class WorxItemMigration extends WorxNodeMigration {
   public function __construct(array $arguments) {
 
     parent::__construct($arguments);
+    
+    /*
+     *  $this->addFieldMapping('DESTINATION', 'SOURCE');
+     */
 
     //$this->addFieldMapping('D7_COLUMN_NAME', 'D6_COLUMN_NAME');
     // Map the image field to the new image field,
